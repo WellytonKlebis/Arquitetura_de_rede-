@@ -1,0 +1,46 @@
+AWSytemplateFormatVersion: "2010-09-09"
+
+Description: " Cria uma vpc, similar ao vpc Wizard"
+   Parameters: 
+
+   VPCName: 
+   Descrition: Nome vpc a ser criada
+   Type: String 
+   Default: "Minha-vpc-cloudformation"
+
+Mappings: 
+  SubnetConfig:
+   VPC:
+      CIDR: "10.0.0.0/16"
+   Public0: 
+      CIDR: "10.0.1.0/24"
+   Public0: 
+      CIDR: "10.0.2.0/24"
+
+   AZRegions:  
+     us-east-1:
+      AZs: ["a", "b"] 
+     sa-east-1: 
+      AZs: ["a", "b"]  
+
+Resource: 
+  VPC:
+   Type: "AWS::EC2::VPC"
+   Properties:
+     EnableDnsSupport: "true"
+     EnableDnHostnames: "true"
+     CidrBlock:
+       Fn::FinInMap:
+         - "SubnetConfig"
+         -  "VPC"
+         -  "CIDR"
+      Tags:
+        -
+        Key: "Application"
+        Value:
+           Ref: "Application"
+
+        -
+        Key:"Network"
+        
+
