@@ -1,10 +1,11 @@
-AWSytemplateFormatVersion: "2010-09-09"
-
-Description: " Cria uma vpc, similar ao vpc Wizard"
+---    
+    
+AWSTemplateFormatVersion: "2010-09-09"
+Description: " Cria uma vpc, similar ao vpc Wizard "
    Parameters: 
 
    VPCName: 
-   Descrition: Nome vpc a ser criada
+   Description: Nome vpc a ser criada
    Type: String 
    Default: "Minha-vpc-cloudformation"
 
@@ -28,7 +29,7 @@ Resource:
    Type: "AWS::EC2::VPC"
    Properties:
      EnableDnsSupport: "true"
-     EnableDnHostnames: "true"
+     EnableDnsHostnames: "true"
      CidrBlock:
        Fn::FinInMap:
          - "SubnetConfig"
@@ -49,14 +50,14 @@ Resource:
         Value: !Ref 'VPCName'
 
    PublicSubnet0:
-   Type : "AWS::EC2::subnet" 
+   Type : "AWS::EC2::Subnet" 
    Properties: 
      VpcId:
        Ref: "VPC"
-     AvailabiltyZone:
+     AvailabilityZone:
        Fn::Sub:
        - "${AWS::Region}${AZ}"   
-       - AZ: !Select [0, !FindInMap ["AZRegion" , !Ref "AWS::Region, ", "AZs" ] ]
+       - AZ: !Select [0, !FindInMap ["AZRegions" , !Ref "AWS::Region, ", "AZs" ] ]
     CidrBlock:
        Fn::FindIdMap:
        - "SubnetConfig"
@@ -111,7 +112,7 @@ Resource:
              - '-private-'
              !Select [0, !FindIdMap ["AZRegions", !Ref "AWS::Region", "AZs " ] ]
 
-internetGateway: 
+InternetGateway: 
        Type: "AWS::EC2::InterneGsteway"
 
        Properties:  
@@ -142,38 +143,38 @@ VpcId:
 Ref: "VPC"
 
 InternetGatwayId: 
-Type: "InternetGatway"
+Ref: "InternetGateway"
 
 PublicRouteTable:
 Type: "AWS::EC2::RouteTable"
 Properties:
 VpcId:
-Ref: "VPC"
+  Ref: "VPC"
 
 Tags:
 
 -
   Key: "Application"
   Value:
-    Ref: AWS::StackName
+    Ref: "AWS::StackName"
    
 -   
    Key: "Network"
    Value: "Public"
  - 
    Key: "Name"
-   Value: "!Join"
+   Value: !Join
      - ''
      - - !Ref "VPCName"
        - '-public-route-table'
 
 
 
-       PublicRoute:
+ PublicRoute:
 
 Type: "AWS::EC2::Route"
 DependsOn: "GatewayToInternet"
-   Propeties:
+   Properties:
      RouteTableId:
      Ref: "PublicRouteTable"
      DestinationCidrBlock: "0.0.0.0/0"
@@ -255,29 +256,109 @@ PublicSubnetNetworkAclAssociation0:
    Ref: "PublicNetworkAcl"
 
 
+ElasticIP0:
 
-
-
-
-    ElasticIP0:
-
-Type: "AWS::EC2::EIP"
-Properties:
- Domain: "vpc"
+   Type: "AWS::EC2::EIP"
+    Properties:
+     Domain: "vpc"
 
 NATGateway0:
-Type: "AWS::EC2::NatGateway"
-Properties:
-Allocation:
- Fn::GetAtt:
+   Type: "AWS::EC2::NatGateway"
+   Properties:
+   Allocation:
+   Fn::GetAtt:
    - "ElasticIP0"
    - "AllocantionId"
- SubnetId:
+   SubnetId:
     Ref: "PublicSubnet0"
 
 PrivateRouteTable0:
    Type: "AWS::EC2::RouteTable"
-Properties:
-VpcId:
-Ref: "VPC"
-Tags: 
+    Properties:
+       VpcId:
+       Ref: "VPC"
+       Tags: 
+       -
+         Key: "Name"
+        Value: !Join
+        - ''
+        - - !Ref "VPCName"
+        - '-private-route-table-0'
+
+
+PrivateRouteTable0:
+  Type:
+  Properties:
+  RouteTableId:
+  Tags:
+
+  -
+
+  Key: "Name"
+  Value: !Join
+     - ''
+     - - !Ref "VPCName"
+     -  '-private-route-table-0'
+
+
+     PrivateRouteToInternet0:
+  Type: "AWS::EC2::Route"
+  Properties:
+  RouteTableId:
+   Ref: "PrivateRouteTable0"
+
+   DestinationCidrBlock: "0.0.0.0/0"
+   NatGatewayId:
+   Ref: "NatGateway0"
+
+
+
+ PrivateSubnetRouteTableAssociation0:
+   Type: "AWS::EC2::SubneteRouteTableAssociation"
+   Properties: 
+      SubnetId:
+      Ref: "PrivateRouteTable0"
+    RouteTableId:
+    Ref: "PrivateSubnet0"
+    RouteTableId:
+    Ref: "PrivateRouteTable0"
+
+
+
+
+Outputs:
+
+VPCId:
+Description: "VPCId of VPC"
+Value:
+Ref "VPC"
+Export:
+Name: !Sub "{AWS::Region}--${AWS::StackName}--VPC"
+
+
+
+PublicSubnet0:
+Description: "SubnetId of public subnet 0"
+Value: 
+  Ref: "PublicSubnet0"
+  Export:
+Name: !Sub "{AWS::Region}--${AWS::StackName}--PublicSubnet0"
+
+
+PrivateSubnet0:
+Description: "SubnetId of private subnet 0"
+Value: 
+  Ref: "PrivateSubnet0"
+  Export:
+  Name: !Sub "{AWS::Region}--${AWS::StackName}--PrivateSubnet0"
+
+
+DefaultSecurityGroup:
+
+Description: "DefaultSecurityGroup Id"
+Value: !GetAtt VPC.DefaultSecurityGroup
+Export:
+
+Name: !Sub Name: !Sub "{AWS::Region}--${AWS::StackName}--DefaultSecurityGroup"
+    
+    
