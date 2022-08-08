@@ -90,12 +90,12 @@ Resource:
       Device: /dev/sdh
 
   WebServerSecurityGroup:
-    Type: AWS::EC2::DefaultSecurityGroup
+    Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable HTTP ingress
       VpcId: 
         Fn::ImportValue:
-          !Sub ${NetworkStackName}-VPCID
+          !Sub us-east-1-${NetworkStackName}-VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
         FromPort: 80
